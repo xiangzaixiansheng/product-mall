@@ -17,7 +17,7 @@ func UserRegister(c *gin.Context) {
 		c.JSON(http.StatusOK, res)
 	} else {
 		c.JSON(http.StatusBadRequest, ErrorResponse(err))
-		pkg_logger.LogrusObj.Infoln(err)
+		pkg_logger.LogrusObj.Error("error", "error", err)
 	}
 }
 
@@ -29,7 +29,7 @@ func UserLogin(c *gin.Context) {
 		c.JSON(http.StatusOK, res)
 	} else {
 		c.JSON(http.StatusBadRequest, ErrorResponse(err))
-		pkg_logger.LogrusObj.Infoln(err)
+		pkg_logger.LogrusObj.Error("error", "error", err)
 	}
 }
 
@@ -42,7 +42,7 @@ func UserUpdate(c *gin.Context) {
 		c.JSON(http.StatusOK, res)
 	} else {
 		c.JSON(http.StatusBadRequest, ErrorResponse(err))
-		pkg_logger.LogrusObj.Infoln(err)
+		pkg_logger.LogrusObj.Error("error", "error", err)
 	}
 }
 
@@ -56,6 +56,6 @@ func SendEmail(c *gin.Context) {
 		c.JSON(http.StatusOK, res)
 	} else {
 		c.JSON(http.StatusBadRequest, ErrorResponse(err))
-		pkg_logger.LogrusObj.Infoln(err)
+		pkg_logger.LogrusObj.Error("error", "error", err)
 	}
 }

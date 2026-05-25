@@ -12,8 +12,8 @@ import (
 func ErrorResponse(err error) dto.Response {
 	if ve, ok := err.(validator.ValidationErrors); ok {
 		for _, e := range ve {
-			field := conf.T(fmt.Sprintf("Field.%s", e.Field))
-			tag := conf.T(fmt.Sprintf("Tag.Valid.%s", e.Tag))
+			field := conf.T(fmt.Sprintf("Field.%s", e.Field()))
+			tag := conf.T(fmt.Sprintf("Tag.Valid.%s", e.Tag()))
 			return dto.Response{
 				Status: 400,
 				Msg:    fmt.Sprintf("%s%s", field, tag),

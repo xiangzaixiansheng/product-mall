@@ -31,7 +31,7 @@ func (service AddressService) Create(ctx context.Context, id uint) dto.Response 
 	}
 	err := repo.Create(&address)
 	if err != nil {
-		pkg_logger.LogrusObj.WithContext(ctx).Errorf("db error:%s", err.Error())
+		pkg_logger.LogrusObj.Error("db error", "error", err)
 		code = e.ErrorDatabase
 		return dto.Response{
 			Status: code,
@@ -45,7 +45,7 @@ func (service AddressService) Create(ctx context.Context, id uint) dto.Response 
 
 	if err != nil {
 		code = e.ErrorDatabase
-		pkg_logger.LogrusObj.WithContext(ctx).Errorf("db error:%s", err.Error())
+		pkg_logger.LogrusObj.Error("db error", "error", err)
 		return dto.Response{
 			Status: code,
 			Msg:    e.GetMsg(code),
@@ -67,7 +67,7 @@ func (service AddressService) List(ctx context.Context, id uint) dto.Response {
 	var addresses []model.Address
 	addresses, err := repo.GetAddressByUid(id)
 	if err != nil {
-		pkg_logger.LogrusObj.WithContext(ctx).Errorf("db error:%s", err.Error())
+		pkg_logger.LogrusObj.Error("db error", "error", err)
 		code = e.ErrorDatabase
 		return dto.Response{
 			Status: code,
@@ -92,7 +92,7 @@ func (service AddressService) Delete(ctx context.Context, id string) dto.Respons
 	var address model.Address
 	address, err := repo.GetAddressById(id)
 	if err != nil {
-		pkg_logger.LogrusObj.WithContext(ctx).Errorf("db error:%s", err.Error())
+		pkg_logger.LogrusObj.Error("db error", "error", err)
 		code = e.ErrorDatabase
 		return dto.Response{
 			Status: code,
@@ -103,7 +103,7 @@ func (service AddressService) Delete(ctx context.Context, id string) dto.Respons
 	err = repo.DeleteAddress(address)
 	if err != nil {
 		code = e.ErrorDatabase
-		pkg_logger.LogrusObj.Errorln(err)
+		pkg_logger.LogrusObj.Error("error", "error", err)
 		return dto.Response{
 			Status: code,
 			Msg:    e.GetMsg(code),

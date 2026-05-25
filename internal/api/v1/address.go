@@ -17,7 +17,7 @@ func CreateAddress(c *gin.Context) {
 		res := service.Create(c, claim.ID)
 		c.JSON(200, res)
 	} else {
-		pkg_logger.LogrusObj.Infoln(err)
+		pkg_logger.LogrusObj.Error("error", "error", err)
 		c.JSON(400, ErrorResponse(err))
 	}
 }
@@ -37,7 +37,7 @@ func UpdateAddress(c *gin.Context) {
 		res := service.Update(c, claim.ID, c.Param("id"))
 		c.JSON(200, res)
 	} else {
-		pkg_logger.LogrusObj.Infoln(err)
+		pkg_logger.LogrusObj.Error("error", "error", err)
 		c.JSON(400, ErrorResponse(err))
 	}
 }

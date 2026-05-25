@@ -8,10 +8,11 @@ import (
 	"product-mall/pkg/db"
 	"product-mall/pkg/e"
 	"product-mall/pkg/pkg_logger"
+	"errors"
 	"strings"
 	"time"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 	"gopkg.in/gomail.v2"
 )
 
@@ -70,7 +71,7 @@ func (service UserService) Register() dto.Response {
 		Money:    util.Encrypt.AesEncoding("10000"),
 	}
 	if err := user.SetPassword(service.Password); err != nil {
-		pkg_logger.LogrusObj.Errorln(err)
+		pkg_logger.LogrusObj.Error("error", "error", err)
 		code = e.ErrorFailEncryption
 		return dto.Response{
 			Status: code,
@@ -80,7 +81,7 @@ func (service UserService) Register() dto.Response {
 	user.Avatar = "http://q1.qlogo.cn/g?b=qq&nk=294350394&s=640"
 	//创建用户
 	if err := db.GetDB().Create(&user).Error; err != nil {
-		pkg_logger.LogrusObj.Errorln(err)
+		pkg_logger.LogrusObj.Error("error", "error", err)
 		code = e.ErrorDatabase
 		return dto.Response{
 			Status: code,
@@ -98,10 +99,10 @@ func (service UserService) Login() dto.Response {
 	var user model.User
 	code := e.SUCCESS
 	if err := db.GetDB().Where("user_name=?", service.UserName).First(&user).Error; err != nil {
-		pkg_logger.LogrusObj.Errorf("Login err: %s", err.Error())
+		pkg_logger.LogrusObj.Error("login error", "error", err)
 
 		//如果查询不到，返回相应的错误
-		if gorm.IsRecordNotFoundError(err) {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 
 			code = e.ErrorNotExistUser
 			return dto.Response{
@@ -126,7 +127,7 @@ func (service UserService) Login() dto.Response {
 
 	token, err := util.GenerateToken(user.ID, service.UserName, 0)
 	if err != nil {
-		pkg_logger.LogrusObj.Errorln(err)
+		pkg_logger.LogrusObj.Error("error", "error", err)
 		code = e.ErrorAuthToken
 		return dto.Response{
 			Status: code,
@@ -146,7 +147,7 @@ func (service UserService) Update(id uint) dto.Response {
 	//https://gorm.io/zh_CN/docs/query.html
 	err := db.GetDB().Where("id", id).First(&user).Error
 	if err != nil {
-		pkg_logger.LogrusObj.Errorln(err)
+		pkg_logger.LogrusObj.Error("error", "error", err)
 		code = e.ErrorDatabase
 		return dto.Response{
 			Status: code,
@@ -161,7 +162,7 @@ func (service UserService) Update(id uint) dto.Response {
 
 	err = db.GetDB().Save(&user).Error
 	if err != nil {
-		pkg_logger.LogrusObj.Errorln(err)
+		pkg_logger.LogrusObj.Error("error", "error", err)
 		code = e.ErrorDatabase
 		return dto.Response{
 			Status: code,
@@ -196,9 +197,9 @@ func (service UserService) Valid_token(token string) dto.Response {
 		//解析链接中的token
 		claims, err := util.ParseEmailToken(token)
 		if err != nil {
-			pkg_logger.LogrusObj.Errorln(err)
+			pkg_logger.LogrusObj.Error("error", "error", err)
 			code = e.ErrorAuthCheckTokenFail
-		} else if time.Now().Unix() > claims.ExpiresAt {
+		} else if claims.ExpiresAt.Before(time.Now()) {
 			code = e.ErrorAuthCheckTokenTimeout
 		} else {
 			userID = claims.UserID
@@ -217,7 +218,7 @@ func (service UserService) Valid_token(token string) dto.Response {
 	// 绑定邮箱
 	if operationType == 1 {
 		if err := db.GetDB().Table("user").Where("id=?", userID).Update("email", email).Error; err != nil {
-			pkg_logger.LogrusObj.Errorf("Valid_token bind-email err: %s", err.Error())
+			pkg_logger.LogrusObj.Error("valid_token bind-email error", "error", err)
 			code = e.ErrorDatabase
 			return dto.Response{
 				Status: code,
@@ -228,7 +229,7 @@ func (service UserService) Valid_token(token string) dto.Response {
 	} else if operationType == 2 {
 		//解除绑定邮箱
 		if err := db.GetDB().Table("user").Where("id=?", userID).Update("email", "").Error; err != nil {
-			pkg_logger.LogrusObj.Errorf("Valid_token unbind-email err: %s", err.Error())
+			pkg_logger.LogrusObj.Error("valid_token unbind-email error", "error", err)
 			code = e.ErrorDatabase
 			return dto.Response{
 				Status: code,
@@ -239,7 +240,7 @@ func (service UserService) Valid_token(token string) dto.Response {
 	} else if operationType == 3 {
 		//获取用户信息
 		if err := db.GetDB().First(&user, userID).Error; err != nil {
-			pkg_logger.LogrusObj.Errorln(err)
+			pkg_logger.LogrusObj.Error("error", "error", err)
 			code = e.ErrorDatabase
 			return dto.Response{
 				Status: code,
@@ -248,7 +249,7 @@ func (service UserService) Valid_token(token string) dto.Response {
 		}
 		// 对密码进行加密
 		if err := user.SetPassword(password); err != nil {
-			pkg_logger.LogrusObj.Errorln(err)
+			pkg_logger.LogrusObj.Error("error", "error", err)
 			code = e.ErrorFailEncryption
 			return dto.Response{
 				Status: code,
@@ -257,7 +258,7 @@ func (service UserService) Valid_token(token string) dto.Response {
 		}
 		//更新数据
 		if err := db.GetDB().Save(&user).Error; err != nil {
-			pkg_logger.LogrusObj.Errorln(err)
+			pkg_logger.LogrusObj.Error("error", "error", err)
 			code = e.ErrorDatabase
 			return dto.Response{
 				Status: code,
@@ -296,7 +297,7 @@ func (service SendEmailService) SendEmail(id uint) dto.Response {
 
 	token, err := util.GenerateEmailToken(id, service.OperationType, service.Password, service.Email)
 	if err != nil {
-		pkg_logger.LogrusObj.Errorf("SendEmail GenerateEmailToken err: %s", err.Error())
+		pkg_logger.LogrusObj.Error("send_email generate_token error", "error", err)
 		code = e.ErrorAuthToken
 		return dto.Response{
 			Status: code,
@@ -305,7 +306,7 @@ func (service SendEmailService) SendEmail(id uint) dto.Response {
 	}
 	//获取对应的邮件提醒的数据
 	if err := db.GetDB().First(&noticeMsg, service.OperationType).Error; err != nil {
-		pkg_logger.LogrusObj.Errorf("SendEmail getEmaiData err: %s", err.Error())
+		pkg_logger.LogrusObj.Error("send_email get_email_data error", "error", err)
 
 		code = e.ErrorDatabase
 		return dto.Response{
@@ -330,7 +331,7 @@ func (service SendEmailService) SendEmail(id uint) dto.Response {
 	d := gomail.NewDialer(conf.SmtpHost, 465, conf.SmtpEmail, conf.SmtpPass)
 
 	if err := d.DialAndSend(m); err != nil {
-		pkg_logger.LogrusObj.Errorf("SendEmail sendEmail err: %s", err.Error())
+		pkg_logger.LogrusObj.Error("send_email error", "error", err)
 		code = e.ErrorSendEmail
 		return dto.Response{
 			Status: code,

@@ -4,7 +4,7 @@ import (
 	rand2 "crypto/rand"
 	"errors"
 	"fmt"
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"hash/crc32"
 	"math"
 	"math/big"
@@ -70,7 +70,7 @@ type RetryClientInterface interface {
 type retryClient struct {
 	channel          *amqp.Channel
 	data             *amqp.Delivery
-	header           map[string]interface{}
+	header           map[string]any
 	deadExchangeName string
 	deadQueueName    string
 	deadRouteKey     string
@@ -78,7 +78,7 @@ type retryClient struct {
 	receive          *ConsumeReceive
 }
 
-func newRetryClient(channel *amqp.Channel, data *amqp.Delivery, header map[string]interface{}, deadExchangeName string, deadQueueName string, deadRouteKey string, pool *RabbitMQPool, receive *ConsumeReceive) *retryClient {
+func newRetryClient(channel *amqp.Channel, data *amqp.Delivery, header map[string]any, deadExchangeName string, deadQueueName string, deadRouteKey string, pool *RabbitMQPool, receive *ConsumeReceive) *retryClient {
 	return &retryClient{channel: channel, data: data, header: header, deadExchangeName: deadExchangeName, deadQueueName: deadQueueName, deadRouteKey: deadRouteKey, pool: pool, receive: receive}
 }
 
@@ -112,7 +112,7 @@ func (r *retryClient) Push(pushData []byte) *RabbitMQError {
 		} else {
 			go func(tryNum int32, pushD []byte) {
 				time.Sleep(time.Millisecond * 200)
-				header := make(map[string]interface{}, 1)
+				header := make(map[string]any, 1)
 				header["retry_nums"] = tryNum
 				expirationTime, errs := RandomAround(r.pool.minRandomRetryTime, r.pool.maxRandomRetryTime)
 				if errs != nil {
@@ -166,7 +166,7 @@ type ConsumeReceive struct {
 	ExchangeType string                                                                                  //交换机类型
 	Route        string                                                                                  //路由
 	QueueName    string                                                                                  //队列名称
-	EventSuccess func(data []byte, header map[string]interface{}, retryClient RetryClientInterface) bool //成功事件回调
+	EventSuccess func(data []byte, header map[string]any, retryClient RetryClientInterface) bool //成功事件回调
 	EventFail    func(int, error, []byte)                                                                //失败回调
 
 	IsTry     bool  //是否重试
@@ -463,7 +463,7 @@ func rConnect(r *RabbitMQPool) (*amqp.Connection, error) {
 func rCreateChannel(conn *rConn) (*amqp.Channel, error) {
 	ch, err := conn.conn.Channel()
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Create Connect Channel Error: %s", err.Error()))
+		return nil, fmt.Errorf("create connect channel error: %w", err)
 	}
 	return ch, nil
 }
@@ -488,21 +488,21 @@ func rDeclare(clientType int, channel *rChannel, exChangeName string, exChangeTy
 	newChannel := channel.ch
 	err := newChannel.ExchangeDeclare(exChangeName, exChangeType, true, false, false, false, nil)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("MQ注册交换机失败:%s", err))
+		return nil, fmt.Errorf("MQ注册交换机失败: %w", err)
 	}
 	if (clientType != RABBITMQ_TYPE_PUBLISH && exChangeType != EXCHANGE_TYPE_FANOUT) || (clientType == RABBITMQ_TYPE_CONSUME && (exChangeType == EXCHANGE_TYPE_FANOUT || exChangeType == EXCHANGE_TYPE_DIRECT)) {
-		argsQue := make(map[string]interface{})
+		argsQue := make(map[string]any)
 		if isDeadQueue {
 			argsQue["x-dead-letter-exchange"] = oldExChangeName
 			argsQue["x-dead-letter-routing-key"] = oldRoute
 		}
 		queue, err := newChannel.QueueDeclare(queueName, true, false, false, false, argsQue)
 		if err != nil {
-			return nil, errors.New(fmt.Sprintf("MQ注册队列失败:%s", err))
+			return nil, fmt.Errorf("MQ注册队列失败: %w", err)
 		}
 		err = newChannel.QueueBind(queue.Name, route, exChangeName, false, nil)
 		if err != nil {
-			return nil, errors.New(fmt.Sprintf("MQ绑定队列失败:%s", err))
+			return nil, fmt.Errorf("MQ绑定队列失败: %w", err)
 		}
 	}
 	channel.ch = newChannel
@@ -682,7 +682,7 @@ func consumeTask(num int32, pool *RabbitMQPool, receive *ConsumeReceive) {
 					} else {
 						go func(tryNum int32) {
 							time.Sleep(time.Millisecond * 200)
-							header := make(map[string]interface{}, 1)
+							header := make(map[string]any, 1)
 							header["retry_nums"] = tryNum
 
 							expirationTime, errs := RandomAround(pool.minRandomRetryTime, pool.maxRandomRetryTime)
@@ -775,7 +775,6 @@ func hashCode(s string) int64 {
 func RandomNum(length int) string {
 	numberAttr := [10]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 	numberLen := len(numberAttr)
-	rand.Seed(time.Now().UnixNano())
 	var sb strings.Builder
 	for i := 0; i < length; i++ {
 		itemInt := numberAttr[rand.Intn(numberLen)]

@@ -7,7 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 func WithRequsetId() gin.HandlerFunc {
@@ -21,21 +20,9 @@ func WithRequsetId() gin.HandlerFunc {
 		c.Request = c.Request.WithContext(ctx)
 		c.Header(constants.HeaderXRequestID, uuID)
 
-		fields := logrus.Fields{}
 		if c.Request.Method == "GET" {
-			fields["param"] = c.Request.URL.Query()
-			pkg_logger.LogrusObj.WithContext(c).WithFields(fields).Info("request param")
+			pkg_logger.LogrusObj.Info("request param", "query", c.Request.URL.Query())
 		}
-		// if c.Request.Method == "POST" {
-		// 	// 使用GetRawData方法获取请求的body数据
-		// 	body, err := c.GetRawData()
-		// 	fmt.Printf("body %s error %s", string(body), err)
-		// 	if err == nil {
-		// 		// 打印请求的body数据
-		// 		fields["param"] = string(body)
-		// 		pkg_logger.LogrusObj.WithContext(c).WithFields(fields).Info("request param")
-		// 	}
-		// }
 
 		c.Next()
 	}

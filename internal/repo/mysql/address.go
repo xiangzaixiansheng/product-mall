@@ -22,7 +22,7 @@ func (a *addressRepo) Create(address *model.Address) error {
 	return a.db.Create(address).Error
 }
 
-func (a *addressRepo) GetAddressByUid(user_id interface{}) (address []model.Address, err error) {
+func (a *addressRepo) GetAddressByUid(user_id any) (address []model.Address, err error) {
 	err = a.db.Model(model.Address{}).Where("user_id = ?", user_id).Order("created_at DESC").Find(&address).Error
 	return
 }

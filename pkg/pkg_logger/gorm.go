@@ -2,11 +2,9 @@ package pkg_logger
 
 import (
 	"context"
-	"errors"
-	"product-mall/internal/constants"
+	"log/slog"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
 	"gorm.io/gorm/utils"
@@ -17,14 +15,12 @@ type GORMLogger struct {
 	SourceField           string
 	SkipErrRecordNotFound bool
 	Debug                 bool
-	LogLevel              int
 }
 
 func NewGORMLogger() *GORMLogger {
 	return &GORMLogger{
 		SkipErrRecordNotFound: true,
-		Debug:                 true, //是否打印debug模式的sql
-		LogLevel:              4,
+		Debug:                 true,
 	}
 }
 
@@ -32,49 +28,47 @@ func (l *GORMLogger) LogMode(gormlogger.LogLevel) gormlogger.Interface {
 	return l
 }
 
-func (l *GORMLogger) Info(ctx context.Context, s string, args ...interface{}) {
-	GetLoggerWithCtx(ctx).Infof(s, args...)
+func (l *GORMLogger) Info(ctx context.Context, s string, args ...any) {
+	GetLoggerWithCtx(ctx).Info(s, "args", args)
 }
 
-func (l *GORMLogger) Warn(ctx context.Context, s string, args ...interface{}) {
-	GetLoggerWithCtx(ctx).Warnf(s, args...)
+func (l *GORMLogger) Warn(ctx context.Context, s string, args ...any) {
+	GetLoggerWithCtx(ctx).Warn(s, "args", args)
 }
 
-func (l *GORMLogger) Error(ctx context.Context, s string, args ...interface{}) {
-	GetLoggerWithCtx(ctx).Errorf(s, args...)
+func (l *GORMLogger) Error(ctx context.Context, s string, args ...any) {
+	GetLoggerWithCtx(ctx).Error(s, "args", args)
 }
 
 func (l *GORMLogger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
 	elapsed := time.Since(begin)
 	sql, _ := fc()
-	fields := logrus.Fields{}
+	logger := GetLoggerWithCtx(ctx)
 	if l.SourceField != "" {
-		fields[l.SourceField] = utils.FileWithLineNum()
+		logger = logger.With("source", utils.FileWithLineNum())
 	}
-	if err != nil && !(errors.Is(err, gorm.ErrRecordNotFound) && l.SkipErrRecordNotFound) {
-		fields[logrus.ErrorKey] = err
-		GetLoggerWithCtx(ctx).WithFields(fields).Errorf("%s [%s]", sql, elapsed)
+	if err != nil && !(err == gorm.ErrRecordNotFound && l.SkipErrRecordNotFound) {
+		logger.Error("sql error", "sql", sql, "elapsed", elapsed, "error", err)
 		return
 	}
 
 	if l.SlowThreshold != 0 && elapsed > l.SlowThreshold {
-		GetLoggerWithCtx(ctx).WithFields(fields).Warnf("%s [%s]", sql, elapsed)
+		logger.Warn("slow sql", "sql", sql, "elapsed", elapsed)
 		return
 	}
 
 	if l.Debug {
-		GetLoggerWithCtx(ctx).WithFields(fields).Debugf("%s [%s]", sql, elapsed)
+		logger.Debug("sql trace", "sql", sql, "elapsed", elapsed)
 		return
 	}
 }
 
-func GetLoggerWithCtx(ctx context.Context) *logrus.Entry {
-	// 从context中获取request_id
-	requestId, ok := ctx.Value(constants.HeaderXRequestID).(string)
-	if !ok {
-		requestId = ""
+func GetLoggerWithCtx(ctx context.Context) *slog.Logger {
+	requestId := ""
+	if ctx != nil {
+		if id, ok := ctx.Value("X-Request-ID").(string); ok {
+			requestId = id
+		}
 	}
-	return LogrusObj.WithFields(logrus.Fields{
-		constants.HeaderXRequestID: requestId,
-	})
+	return LogrusObj.With("X-Request-ID", requestId)
 }

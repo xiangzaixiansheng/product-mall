@@ -13,7 +13,7 @@ import (
 func JWT() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var code int
-		var data interface{}
+		var data any
 		code = 200
 		token := c.GetHeader("Cookie")
 
@@ -29,7 +29,7 @@ func JWT() gin.HandlerFunc {
 			claims, err := util.ParseToken(token)
 			if err != nil {
 				code = e.ErrorAuthCheckTokenFail
-			} else if time.Now().Unix() > claims.ExpiresAt {
+			} else if claims.ExpiresAt.Before(time.Now()) {
 				code = e.ErrorAuthCheckTokenTimeout
 			}
 		}
@@ -50,7 +50,7 @@ func JWT() gin.HandlerFunc {
 func JWTAdmin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var code int
-		var data interface{}
+		var data any
 		token := c.GetHeader("Cookie")
 		if conf.ENV == "dev" {
 			//测试环境走下去
@@ -63,7 +63,7 @@ func JWTAdmin() gin.HandlerFunc {
 			claims, err := util.ParseToken(token)
 			if err != nil {
 				code = e.ErrorAuthCheckTokenFail
-			} else if time.Now().Unix() > claims.ExpiresAt {
+			} else if claims.ExpiresAt.Before(time.Now()) {
 				code = e.ErrorAuthCheckTokenTimeout
 			} else if claims.Authority == 0 {
 				code = e.ErrorAuthInsufficientAuthority

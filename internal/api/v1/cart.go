@@ -17,7 +17,7 @@ func CreateCart(c *gin.Context) {
 		c.JSON(http.StatusOK, res)
 	} else {
 		c.JSON(http.StatusBadRequest, ErrorResponse(err))
-		pkg_logger.LogrusObj.Infoln(err)
+		pkg_logger.LogrusObj.Error("error", "error", err)
 	}
 }
 
@@ -34,7 +34,7 @@ func UpdateCart(c *gin.Context) {
 		c.JSON(http.StatusOK, res)
 	} else {
 		c.JSON(http.StatusBadRequest, ErrorResponse(err))
-		pkg_logger.LogrusObj.Infoln(err)
+		pkg_logger.LogrusObj.Error("error", "error", err)
 	}
 }
 
@@ -46,6 +46,6 @@ func DeleteCart(c *gin.Context) {
 		c.JSON(http.StatusOK, res)
 	} else {
 		c.JSON(http.StatusBadRequest, ErrorResponse(err))
-		pkg_logger.LogrusObj.Infoln(err)
+		pkg_logger.LogrusObj.Error("error", "error", err)
 	}
 }

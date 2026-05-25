@@ -2,8 +2,7 @@ package tools
 
 import (
 	"encoding/json"
-	"fmt"
-	"log"
+	"log/slog"
 	"reflect"
 	"strconv"
 )
@@ -11,14 +10,12 @@ import (
 func StrToInt(val string) int {
 	v1, err := strconv.ParseInt(val, 10, 64)
 	if err != nil {
-		log.Println(err)
+		slog.Error("strconv parse int failed", "error", err)
 	}
 	return int(v1)
 }
 
-// ToString 各种类型转string
-// 整数转换为10进制的字符串
-func ToString(v interface{}) string {
+func ToString(v any) string {
 	t := reflect.TypeOf(v)
 	var s string
 	switch t.Kind() {
@@ -41,20 +38,18 @@ func ToString(v interface{}) string {
 	case reflect.Bool:
 		s = strconv.FormatBool(v.(bool))
 	case reflect.Float32:
-		// 默认以(-ddd.dddd, no exponent)格式转化浮点数
 		s = strconv.FormatFloat(float64(v.(float32)), 'f', -1, 64)
 	case reflect.Float64:
 		s = strconv.FormatFloat(v.(float64), 'f', -1, 64)
 	case reflect.Map, reflect.Struct, reflect.Slice:
 		s = ToJson(v)
 	default:
-		fmt.Printf("type %s is not support, use fmt.Sprintf instead", t.Kind())
+		slog.Warn("unsupported type for ToString", "type", t.Kind().String())
 	}
 	return s
 }
 
-// ToJson 转成json字符串
-func ToJson(m interface{}) string {
+func ToJson(m any) string {
 	data, err := json.Marshal(m)
 	if err != nil {
 		panic(err)
@@ -62,8 +57,7 @@ func ToJson(m interface{}) string {
 	return string(data)
 }
 
-// TypeOf 获取变量类型
-func TypeOf(data interface{}) string {
+func TypeOf(data any) string {
 	if data == nil {
 		return "nil"
 	}

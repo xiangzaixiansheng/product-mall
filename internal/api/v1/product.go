@@ -1,7 +1,7 @@
 package v1
 
 import (
-	"fmt"
+	"log/slog"
 	"net/http"
 	"product-mall/internal/service"
 	util "product-mall/internal/tools"
@@ -12,9 +12,8 @@ import (
 
 func CreateProduct(c *gin.Context) {
 	var productService service.ProductService
-	//获取文件信息
 	form, _ := c.MultipartForm()
-	fmt.Println("c.Request.MultipartForm", form)
+	slog.Debug("multipart form received", "files", len(form.File["file"]))
 	files := form.File["file"]
 	//检查cookie里面的信息
 	claims, _ := util.ParseToken(c.GetHeader("Cookie"))
@@ -23,7 +22,7 @@ func CreateProduct(c *gin.Context) {
 		c.JSON(http.StatusOK, res)
 	} else {
 		c.JSON(http.StatusBadRequest, ErrorResponse(err))
-		pkg_logger.LogrusObj.Infoln(err)
+		pkg_logger.LogrusObj.Error("error", "error", err)
 	}
 
 }

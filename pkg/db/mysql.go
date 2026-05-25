@@ -2,8 +2,7 @@ package db
 
 import (
 	"context"
-	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"product-mall/conf"
 	"product-mall/internal/model"
@@ -21,12 +20,9 @@ var DB *gorm.DB
 type ormLog struct{}
 
 //orm 日志记录
-func (l ormLog) Printf(format string, args ...interface{}) {
-	//if gin.Mode() == "dev" {
+func (l ormLog) Printf(format string, args ...any) {
 	if conf.ENV == "dev" {
-		pkg_logger.LogrusObj.Printf(format, args...)
-	} else {
-		log.Printf(format, args...)
+		pkg_logger.LogrusObj.Info(format, "args", args)
 	}
 }
 
@@ -77,10 +73,10 @@ func Migration() {
 			&model.Address{},
 			&model.Cart{})
 	if err != nil {
-		fmt.Println("register table fail")
+		slog.Info("table migration failed")
 		os.Exit(0)
 	}
-	fmt.Println("register table success")
+	slog.Info("table migration success")
 }
 
 // 获取db

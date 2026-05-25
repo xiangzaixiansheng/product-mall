@@ -2,15 +2,14 @@ package conf
 
 import (
 	"fmt"
+	"log/slog"
+	"os"
 	"path"
 	"path/filepath"
 	"product-mall/cache"
 	"runtime"
-
-	"os"
 	"strings"
 
-	logging "github.com/sirupsen/logrus"
 	"gopkg.in/ini.v1"
 )
 
@@ -52,18 +51,19 @@ func Init() {
 	} else {
 		ENV = "dev"
 	}
-	fmt.Println("环境变量是", ENV)
+	slog.Info("environment", "ENV", ENV)
 	//获取当前目录
 	_, filename, _, _ := runtime.Caller(0)
 	dir := path.Dir(filename)
 	configFilePath := filepath.Join(dir, fmt.Sprintf("app.%s.ini", ENV))
 	localFilePath := filepath.Join(dir, "/locales/zh-cn.yaml")
 
-	fmt.Printf("configFilePath", configFilePath)
+	slog.Info("config file", "path", configFilePath)
 
 	file, err := ini.Load(configFilePath)
 	if err != nil {
-		fmt.Println("配置文件读取错误，请检查文件路径:", err)
+		slog.Error("failed to load config file", "path", configFilePath, "error", err)
+		panic(err)
 	}
 	LoadServer(file)
 	LoadMysqlData(file)
@@ -71,10 +71,10 @@ func Init() {
 	LoadEmail(file)
 	LoadQinNiu(file)
 	if err := LoadLocales(localFilePath); err != nil {
-		logging.Info(err) //日志内容
+		slog.Error("failed to load locales", "path", localFilePath, "error", err)
 		panic(err)
 	}
-	fmt.Println("resdis-----", RedisAddr, RedisDbName)
+	slog.Info("redis config", "addr", RedisAddr, "db", RedisDbName)
 	//redis
 	cache.NewRedis(RedisAddr, RedisDbName, "")
 

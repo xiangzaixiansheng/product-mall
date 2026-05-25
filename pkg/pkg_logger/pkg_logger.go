@@ -1,77 +1,37 @@
 package pkg_logger
 
 import (
-	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"path"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
-var LogrusObj *logrus.Logger
+var LogrusObj *slog.Logger
 
 func init() {
 	if LogrusObj != nil {
-		src, _ := setOutputFile()
-		//设置输出
-		LogrusObj.Out = src
 		return
 	}
-	//实例化
-	logger := logrus.New()
-	src, _ := setOutputFile()
-	//设置输出
-	logger.Out = src
-	//设置日志级别
-	logger.SetLevel(logrus.DebugLevel)
-	//设置日志格式
-	logger.SetFormatter(&logrus.JSONFormatter{
-		TimestampFormat: "2006-01-02 15:04:05",
-	})
-
-	// 取消线程安全
-	logger.SetNoLock()
-	/*
-		加个hook形成ELK体系
-		但是考虑到一些同学一下子接受不了那么多技术栈，
-		所以这里的ELK体系加了注释，如果想引入可以直接注释去掉，
-		如果不想引入这样注释掉也是没问题的。
-	*/
-	//hook := model.EsHookLog()
-	logger.AddHook(NewLogTrace())
-	LogrusObj = logger
-}
-
-func setOutputFile() (*os.File, error) {
-	now := time.Now()
 	logFilePath := ""
 	if dir, err := os.Getwd(); err == nil {
 		logFilePath = dir + "/logs/"
 	}
-	fmt.Println(logFilePath)
-	_, err := os.Stat(logFilePath)
-	if os.IsNotExist(err) {
-		if err := os.MkdirAll(logFilePath, 0777); err != nil {
-			log.Println(err.Error())
-			return nil, err
-		}
+
+	if err := os.MkdirAll(logFilePath, 0755); err != nil {
+		panic(err)
 	}
-	logFileName := now.Format("2006-01-02") + ".log"
-	//日志文件
+
+	logFileName := time.Now().Format("2006-01-02") + ".log"
 	fileName := path.Join(logFilePath, logFileName)
-	if _, err := os.Stat(fileName); err != nil {
-		if _, err := os.Create(fileName); err != nil {
-			log.Println(err.Error())
-			return nil, err
-		}
-	}
-	//写入文件
-	src, err := os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+
+	file, err := os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
-		log.Println(err)
-		return nil, err
+		panic(err)
 	}
-	return src, nil
+
+	handler := slog.NewJSONHandler(file, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	})
+	LogrusObj = slog.New(handler)
 }

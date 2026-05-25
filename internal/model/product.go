@@ -4,7 +4,7 @@ import (
 	"product-mall/cache"
 	"strconv"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 //商品信息
