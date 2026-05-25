@@ -26,6 +26,11 @@ var MsgFlags = map[int]string{
 
 	ErrorDatabase: "数据库操作出错,请重试",
 
+	ErrorOrderNotFound: "订单不存在",
+	ErrorOrderStatus:   "订单状态不正确",
+	ErrorOutOfStock:    "商品库存不足",
+	ErrorCartEmpty:     "购物车为空",
+
 	ErrorOss: "OSS配置错误",
 }
 

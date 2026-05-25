@@ -1,5 +1,70 @@
 # 升级文档 (2026-05-25)
 
+## 2026-05-25 订单系统 + 商品分类/搜索
+
+### 新增：订单系统
+
+| 接口 | 方法 | 路径 | 说明 |
+|------|------|------|------|
+| 创建订单 | POST | `/api/v1/orders` | 从购物车下单，Redis分布式锁防超卖 |
+| 订单列表 | GET | `/api/v1/orders` | 分页查询，支持按状态筛选 |
+| 订单详情 | GET | `/api/v1/orders/:id` | 包含订单项明细 |
+| 模拟支付 | PUT | `/api/v1/orders/:id/pay` | 更新状态为已支付 |
+| 取消订单 | PUT | `/api/v1/orders/:id/cancel` | 取消并恢复库存 |
+
+**订单状态流转**: 待支付(0) → 已支付(1) → 已发货(2) → 已完成(3) / 已取消(4)
+
+**防超卖机制**: Redis SETNX 分布式锁 + 数据库乐观更新 (`num >= ?`)
+
+### 新增：商品分类
+
+| 接口 | 方法 | 路径 | 说明 |
+|------|------|------|------|
+| 分类树 | GET | `/api/v1/categories` | 公开，返回树形结构 |
+| 创建分类 | POST | `/api/v1/categories` | 支持多级分类 (parent_id) |
+| 更新分类 | PUT | `/api/v1/categories/:id` | |
+| 删除分类 | DELETE | `/api/v1/categories/:id` | 有子分类时拒绝删除 |
+
+### 新增：商品搜索增强
+
+| 接口 | 方法 | 路径 | 说明 |
+|------|------|------|------|
+| 商品搜索 | GET | `/api/v1/products` | 公开接口 |
+
+支持参数：
+- `keyword` - 关键词搜索 (名称/描述)
+- `category_id` - 按分类筛选
+- `min_price` / `max_price` - 价格区间
+- `sort` - 排序方式：`price_asc` / `price_desc` / `newest` / `sales`
+- `page` / `page_size` - 标准分页
+
+### 新增文件
+
+| 文件 | 说明 |
+|------|------|
+| `internal/model/category.go` | 分类 Model (支持树形) |
+| `internal/model/order.go` | Order + OrderItem Model |
+| `internal/dto/category.go` | 分类 DTO + 树构建 |
+| `internal/dto/order.go` | 订单 DTO |
+| `internal/service/category.go` | 分类 CRUD |
+| `internal/service/order.go` | 订单业务逻辑 |
+| `internal/api/v1/category.go` | 分类 Handler |
+| `internal/api/v1/order.go` | 订单 Handler |
+
+### 修改文件
+
+| 文件 | 改动 |
+|------|------|
+| `internal/routes/router.go` | 注册分类/搜索/订单路由 |
+| `internal/service/product.go` | 新增 ProductSearchService 增强搜索 |
+| `internal/api/v1/product.go` | 新增 SearchProducts handler |
+| `pkg/db/mysql.go` | Migration 增加 Category/Order/OrderItem |
+| `pkg/e/code.go` / `msg.go` | 新增订单相关错误码 |
+| `cache/common.go` | 新增 Lock/Unlock 分布式锁 |
+| `cache/key.go` | 新增 GetProductLockKey |
+
+---
+
 ## 2026-05-25 安全加固 & 工程基建完善
 
 ### 安全修复

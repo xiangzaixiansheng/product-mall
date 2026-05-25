@@ -71,7 +71,10 @@ func Migration() {
 			&model.Product{},
 			&model.ProductImg{},
 			&model.Address{},
-			&model.Cart{})
+			&model.Cart{},
+			&model.Category{},
+			&model.Order{},
+			&model.OrderItem{})
 	if err != nil {
 		slog.Info("table migration failed")
 		os.Exit(0)

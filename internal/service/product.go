@@ -31,6 +31,16 @@ type ProductService struct {
 type ListProductImgService struct {
 }
 
+type ProductSearchService struct {
+	Keyword    string `form:"keyword" json:"keyword"`
+	CategoryID int    `form:"category_id" json:"category_id"`
+	MinPrice   string `form:"min_price" json:"min_price"`
+	MaxPrice   string `form:"max_price" json:"max_price"`
+	Sort       string `form:"sort" json:"sort"` // price_asc, price_desc, newest, sales
+	Page       int    `form:"page" json:"page"`
+	PageSize   int    `form:"page_size" json:"page_size"`
+}
+
 //创建商品
 func (service *ProductService) Create(id uint, files []*multipart.FileHeader) dto.Response {
 	code := e.SUCCESS
@@ -264,4 +274,71 @@ func (service *ListProductImgService) List(id string) dto.Response {
 	var productImgList []model.ProductImg
 	db.GetDB().Model(model.ProductImg{}).Where("product_id=?", id).Find(&productImgList)
 	return dto.BuildListResponse(dto.BuildProductImgs(productImgList), int64(len(productImgList)))
+}
+
+func (service *ProductSearchService) Search() dto.Response {
+	var products []model.Product
+	var total int64
+	code := e.SUCCESS
+
+	if service.PageSize == 0 {
+		service.PageSize = 20
+	}
+	if service.Page == 0 {
+		service.Page = 1
+	}
+
+	query := db.GetDB().Model(&model.Product{}).Where("on_sale = ?", true)
+
+	if service.Keyword != "" {
+		keyword := "%" + service.Keyword + "%"
+		query = query.Where("name LIKE ? OR info LIKE ?", keyword, keyword)
+	}
+
+	if service.CategoryID > 0 {
+		query = query.Where("category_id = ?", service.CategoryID)
+	}
+
+	if service.MinPrice != "" {
+		query = query.Where("CAST(price AS DECIMAL(10,2)) >= ?", service.MinPrice)
+	}
+	if service.MaxPrice != "" {
+		query = query.Where("CAST(price AS DECIMAL(10,2)) <= ?", service.MaxPrice)
+	}
+
+	if err := query.Count(&total).Error; err != nil {
+		pkg_logger.Logger.Error("search count error", "error", err)
+		code = e.ErrorDatabase
+		return dto.Response{
+			Status: code,
+			Msg:    e.GetMsg(code),
+			Error:  err.Error(),
+		}
+	}
+
+	switch service.Sort {
+	case "price_asc":
+		query = query.Order("CAST(price AS DECIMAL(10,2)) ASC")
+	case "price_desc":
+		query = query.Order("CAST(price AS DECIMAL(10,2)) DESC")
+	case "newest":
+		query = query.Order("created_at DESC")
+	case "sales":
+		query = query.Order("num DESC")
+	default:
+		query = query.Order("created_at DESC")
+	}
+
+	offset := (service.Page - 1) * service.PageSize
+	if err := query.Offset(offset).Limit(service.PageSize).Find(&products).Error; err != nil {
+		pkg_logger.Logger.Error("search products error", "error", err)
+		code = e.ErrorDatabase
+		return dto.Response{
+			Status: code,
+			Msg:    e.GetMsg(code),
+			Error:  err.Error(),
+		}
+	}
+
+	return dto.BuildPagedResponse(dto.BuildProducts(products), total, service.Page, service.PageSize)
 }

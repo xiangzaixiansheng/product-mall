@@ -14,7 +14,10 @@ const (
 	CameraRank = "CameraRank"
 )
 
-//获取rediskey
 func GetViewKey(id uint) string {
 	return fmt.Sprintf("views:product:%s", strconv.Itoa(int(id)))
+}
+
+func GetProductLockKey(id uint) string {
+	return fmt.Sprintf("lock:product:%d", id)
 }

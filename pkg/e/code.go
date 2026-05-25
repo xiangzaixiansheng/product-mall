@@ -28,6 +28,12 @@ const (
 	//数据库错误
 	ErrorDatabase = 40001
 
+	//订单错误
+	ErrorOrderNotFound    = 40010
+	ErrorOrderStatus      = 40011
+	ErrorOutOfStock       = 40012
+	ErrorCartEmpty        = 40013
+
 	//对象存储错误
 	ErrorOss        = 50001
 	ErrorUploadFile = 50002

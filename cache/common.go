@@ -55,3 +55,11 @@ func (mr MyRedis) Incr(key string) *redis.IntCmd {
 func (mr MyRedis) ZIncrBy(key string, increment float64, member string) *redis.FloatCmd {
 	return mr.Client.ZIncrBy(context.Background(), key, increment, member)
 }
+
+func (mr *MyRedis) Lock(key string, ttl time.Duration) (bool, error) {
+	return mr.Client.SetNX(context.Background(), key, 1, ttl).Result()
+}
+
+func (mr *MyRedis) Unlock(key string) error {
+	return mr.Client.Del(context.Background(), key).Err()
+}
