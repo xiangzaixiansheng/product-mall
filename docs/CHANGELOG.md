@@ -1,5 +1,42 @@
 # 升级文档 (2026-05-25)
 
+## 2026-05-25 企业级功能增强
+
+### 新增中间件
+
+| 中间件 | 文件 | 说明 |
+|-------|------|------|
+| 超时控制 | `internal/middleware/timeout.go` | 30秒请求超时，context timeout |
+| Gzip压缩 | `internal/middleware/gzip.go` | HTTP 响应压缩 |
+| 安全头 | `internal/middleware/security.go` | X-Frame-Options, CSP, HSTS 等 |
+| 限流 | `internal/middleware/ratelimit.go` | Redis 滑动窗口限流 (100req/min) |
+
+### 新增功能
+
+| 功能 | 文件 | 说明 |
+|------|------|------|
+| 健康检查 | `internal/api/v1/health.go` | `/health` 检查 MySQL/Redis 状态 |
+| 统一响应 | `pkg/response/response.go` | 标准化的 API 响应格式 |
+| 指标收集中间件 | `internal/middleware/metrics.go` | 请求计数和延迟统计 |
+
+### 依赖更新
+
+| 包 | 版本 | 说明 |
+|---|------|------|
+| gin | v1.9.1 → v1.12.0 | Web 框架升级 |
+| gin-contrib/gzip | 新增 v1.2.6 | 压缩中间件 |
+| validator | v10 → v11 | 参数校验 |
+
+### 路由更新
+
+- 新增 `GET /health` 健康检查接口
+- 所有中间件默认启用 (压缩、安全头、超时、限流)
+- 限流使用 Redis 滑动窗口算法
+
+---
+
+## 初始升级 (2026-05-25 上午)
+
 ## 升级概述
 
 本次升级将 `product-mall` 项目从 Go 1.17 升级至 Go 1.22+，并更新了所有过时的依赖和代码模式。
