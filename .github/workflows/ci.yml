@@ -67,7 +67,7 @@ jobs:
           DB_PASSWORD: root
           DB_NAME: product_mall
           REDIS_ADDR: 127.0.0.1:6379
-        run: go test ./... -v -count=1
+        run: go test -short ./... -v -count=1
 
   lint:
     runs-on: ubuntu-latest

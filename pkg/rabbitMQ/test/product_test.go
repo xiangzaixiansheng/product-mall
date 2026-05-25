@@ -8,6 +8,9 @@ import (
 )
 
 func TestProduct(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	initrabbitmq()
 	rund()
 }

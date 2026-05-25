@@ -8,6 +8,9 @@ import (
 )
 
 func TestConsume(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	initConsumerabbitmq()
 	Consume()
 }
