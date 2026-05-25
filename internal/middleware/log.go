@@ -14,7 +14,7 @@ func Logger() gin.HandlerFunc {
 		endTime := time.Now()
 		latencyTime := endTime.Sub(startTime)
 
-		pkg_logger.LogrusObj.Info("request completed",
+		pkg_logger.Logger.Info("request completed",
 			"status", c.Writer.Status(),
 			"latency", latencyTime,
 			"client_ip", c.ClientIP(),

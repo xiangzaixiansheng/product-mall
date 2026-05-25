@@ -69,7 +69,7 @@ func (service *ProductService) Create(id uint, files []*multipart.FileHeader) dt
 	}
 	err := db.GetDB().Create(&product).Error
 	if err != nil {
-		pkg_logger.LogrusObj.Error("error", "error", err)
+		pkg_logger.Logger.Error("error", "error", err)
 		code = e.ErrorDatabase
 		return dto.Response{
 			Status: code,
@@ -122,7 +122,7 @@ func (service *ProductService) List() dto.Response {
 	//如果传入的商品的CategoryID为0的话
 	if service.CategoryID == 0 {
 		if err := db.GetDB().Model(model.Product{}).Count(&total).Error; err != nil {
-			pkg_logger.LogrusObj.Error("error", "error", err)
+			pkg_logger.Logger.Error("error", "error", err)
 			code = e.ErrorDatabase
 			return dto.Response{
 				Status: code,
@@ -133,7 +133,7 @@ func (service *ProductService) List() dto.Response {
 		if err := db.GetDB().Offset((service.PageNum - 1) * service.PageSize).
 			Limit(service.PageSize).Find(&products).
 			Error; err != nil {
-			pkg_logger.LogrusObj.Error("error", "error", err)
+			pkg_logger.Logger.Error("error", "error", err)
 			code = e.ErrorDatabase
 			return dto.Response{
 				Status: code,
@@ -147,7 +147,7 @@ func (service *ProductService) List() dto.Response {
 		if err := db.GetDB().Model(model.Product{}).Preload("Category").
 			Where("category_id = ?", service.CategoryID).
 			Count(&total).Error; err != nil {
-			pkg_logger.LogrusObj.Error("error", "error", err)
+			pkg_logger.Logger.Error("error", "error", err)
 			code = e.ErrorDatabase
 			return dto.Response{
 				Status: code,
@@ -161,7 +161,7 @@ func (service *ProductService) List() dto.Response {
 			Offset((service.PageNum - 1) * service.PageSize).
 			Limit(service.PageSize).
 			Find(&products).Error; err != nil {
-			pkg_logger.LogrusObj.Error("error", "error", err)
+			pkg_logger.Logger.Error("error", "error", err)
 			code = e.ErrorDatabase
 			return dto.Response{
 				Status: code,
@@ -172,7 +172,7 @@ func (service *ProductService) List() dto.Response {
 
 	}
 
-	return dto.BuildListResponse(dto.BuildProducts(products), uint(total))
+	return dto.BuildListResponse(dto.BuildProducts(products), total)
 }
 
 //删除商品
@@ -181,7 +181,7 @@ func (service *ProductService) Delete(id string) dto.Response {
 	var product model.Product
 	//判断商品是否存在
 	if err := db.GetDB().First(&product, id).Error; err != nil {
-		pkg_logger.LogrusObj.Error("error", "error", err)
+		pkg_logger.Logger.Error("error", "error", err)
 		code = e.ErrorDatabase
 		return dto.Response{
 			Status: code,
@@ -191,7 +191,7 @@ func (service *ProductService) Delete(id string) dto.Response {
 	}
 	//存在则删除商品
 	if err := db.GetDB().Delete(&product).Error; err != nil {
-		pkg_logger.LogrusObj.Error("error", "error", err)
+		pkg_logger.Logger.Error("error", "error", err)
 		code = e.ErrorDatabase
 		return dto.Response{
 			Status: code,
@@ -222,7 +222,7 @@ func (service *ProductService) Update(id string) dto.Response {
 	code := e.SUCCESS
 
 	if err := db.GetDB().Save(&product).Error; err != nil {
-		pkg_logger.LogrusObj.Error("error", "error", err)
+		pkg_logger.Logger.Error("error", "error", err)
 		code = e.ErrorDatabase
 		return dto.Response{
 			Status: code,
@@ -248,7 +248,7 @@ func (service *ProductService) Search() dto.Response {
 		Offset((service.PageNum - 1) * service.PageSize).
 		Limit(service.PageSize).Find(&products).Error
 	if err != nil {
-		pkg_logger.LogrusObj.Error("error", "error", err)
+		pkg_logger.Logger.Error("error", "error", err)
 		code = e.ErrorDatabase
 		return dto.Response{
 			Status: code,
@@ -256,12 +256,12 @@ func (service *ProductService) Search() dto.Response {
 			Error:  err.Error(),
 		}
 	}
-	return dto.BuildListResponse(dto.BuildProducts(products), uint(len(products)))
+	return dto.BuildListResponse(dto.BuildProducts(products), int64(len(products)))
 }
 
 //获取商品列表图片
 func (service *ListProductImgService) List(id string) dto.Response {
 	var productImgList []model.ProductImg
 	db.GetDB().Model(model.ProductImg{}).Where("product_id=?", id).Find(&productImgList)
-	return dto.BuildListResponse(dto.BuildProductImgs(productImgList), uint(len(productImgList)))
+	return dto.BuildListResponse(dto.BuildProductImgs(productImgList), int64(len(productImgList)))
 }

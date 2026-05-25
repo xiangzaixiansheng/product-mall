@@ -2,16 +2,21 @@ package routes
 
 import (
 	"net/http"
+	"os"
 	"time"
 
 	api "product-mall/internal/api/v1"
 	"product-mall/internal/middleware"
 	"product-mall/pkg/db"
 
+	_ "product-mall/docs/swagger"
+
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func NewRouter() *gin.Engine {
@@ -24,10 +29,15 @@ func NewRouter() *gin.Engine {
 	r.Use(middleware.Timeout(30 * time.Second))
 	r.Use(middleware.Logger())
 
-	store := cookie.NewStore([]byte("something-very-secret"))
+	sessionSecret := os.Getenv("SESSION_SECRET")
+	if sessionSecret == "" {
+		sessionSecret = "dev-session-secret-change-me"
+	}
+	store := cookie.NewStore([]byte(sessionSecret))
 	r.Use(sessions.Sessions("mysession", store))
 
 	r.GET("/health", api.HealthCheck)
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	redisClient := db.GetRedisClient()
 	if redisClient != nil {

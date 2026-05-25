@@ -3,7 +3,6 @@ package v1
 import (
 	"net/http"
 	"product-mall/internal/service"
-	util "product-mall/internal/tools"
 	"product-mall/pkg/pkg_logger"
 
 	"github.com/gin-gonic/gin"
@@ -11,13 +10,12 @@ import (
 
 func CreateCart(c *gin.Context) {
 	createCartService := service.CartService{}
-	claim, _ := util.ParseToken(c.GetHeader("Authorization"))
 	if err := c.ShouldBind(&createCartService); err == nil {
-		res := createCartService.Create(c.Param("id"), claim.ID)
+		res := createCartService.Create(c.Param("id"), getUserID(c))
 		c.JSON(http.StatusOK, res)
 	} else {
 		c.JSON(http.StatusBadRequest, ErrorResponse(err))
-		pkg_logger.LogrusObj.Error("error", "error", err)
+		pkg_logger.Logger.Error("error", "error", err)
 	}
 }
 
@@ -34,18 +32,17 @@ func UpdateCart(c *gin.Context) {
 		c.JSON(http.StatusOK, res)
 	} else {
 		c.JSON(http.StatusBadRequest, ErrorResponse(err))
-		pkg_logger.LogrusObj.Error("error", "error", err)
+		pkg_logger.Logger.Error("error", "error", err)
 	}
 }
 
 func DeleteCart(c *gin.Context) {
 	deleteCartService := service.CartService{}
-	claim, _ := util.ParseToken(c.GetHeader("Authorization"))
 	if err := c.ShouldBind(&deleteCartService); err == nil {
-		res := deleteCartService.Delete(c.Param("id"), claim.ID)
+		res := deleteCartService.Delete(c.Param("id"), getUserID(c))
 		c.JSON(http.StatusOK, res)
 	} else {
 		c.JSON(http.StatusBadRequest, ErrorResponse(err))
-		pkg_logger.LogrusObj.Error("error", "error", err)
+		pkg_logger.Logger.Error("error", "error", err)
 	}
 }

@@ -26,7 +26,7 @@ func (service *CartService) Create(id string, uid uint) dto.Response {
 	code := e.SUCCESS
 	if err := db.GetDB().First(&product, id).Error; err != nil {
 		//商品信息不存在也包含在里面
-		pkg_logger.LogrusObj.Error("db error", "error", err)
+		pkg_logger.Logger.Error("db error", "error", err)
 		code = e.ErrorDatabase
 		return dto.Response{
 			Status: code,
@@ -50,7 +50,7 @@ func (service *CartService) Create(id string, uid uint) dto.Response {
 		}
 		err := db.GetDB().Create(&cart).Error
 		if err != nil {
-			pkg_logger.LogrusObj.Error("db error", "error", err)
+			pkg_logger.Logger.Error("db error", "error", err)
 			code = e.ErrorDatabase
 			return dto.Response{
 				Status: code,
@@ -69,7 +69,7 @@ func (service *CartService) Create(id string, uid uint) dto.Response {
 		cart.Num++
 		err := db.GetDB().Save(&cart).Error
 		if err != nil {
-			pkg_logger.LogrusObj.Error("db error", "error", err)
+			pkg_logger.Logger.Error("db error", "error", err)
 			return dto.Response{
 				Status: code,
 				Msg:    e.GetMsg(code),
@@ -98,7 +98,7 @@ func (service *CartService) Update(id string) dto.Response {
 	code := e.SUCCESS
 	err := db.GetDB().Where("id=?", id).Find(&cart).Error
 	if err != nil {
-		pkg_logger.LogrusObj.Error("db error", "error", err)
+		pkg_logger.Logger.Error("db error", "error", err)
 		code := e.ErrorDatabase
 		return dto.Response{
 			Status: code,
@@ -111,7 +111,7 @@ func (service *CartService) Update(id string) dto.Response {
 	cart.Num = service.Num
 	err = db.GetDB().Save(&cart).Error
 	if err != nil {
-		pkg_logger.LogrusObj.Error("db error", "error", err)
+		pkg_logger.Logger.Error("db error", "error", err)
 		code := e.ErrorDatabase
 		return dto.Response{
 			Status: code,
@@ -133,7 +133,7 @@ func (service *CartService) Delete(pid string, uid uint) dto.Response {
 	code := e.SUCCESS
 	err := db.GetDB().Where("user_id=? AND product_id=?", uid, pid).Error
 	if err != nil {
-		pkg_logger.LogrusObj.Error("db error", "error", err)
+		pkg_logger.Logger.Error("db error", "error", err)
 		code := e.ErrorDatabase
 		return dto.Response{
 			Status: code,
@@ -143,7 +143,7 @@ func (service *CartService) Delete(pid string, uid uint) dto.Response {
 	}
 	err = db.GetDB().Delete(&cart).Error
 	if err != nil {
-		pkg_logger.LogrusObj.Error("db error", "error", err)
+		pkg_logger.Logger.Error("db error", "error", err)
 		code := e.ErrorDatabase
 		return dto.Response{
 			Status: code,
@@ -166,7 +166,7 @@ func (service *CartService) List(userId string) dto.Response {
 	err := db.GetDB().Where("user_id=?", userId).Find(&carts).Error
 
 	if err != nil {
-		pkg_logger.LogrusObj.Error("db error", "error", err)
+		pkg_logger.Logger.Error("db error", "error", err)
 		code := e.ErrorDatabase
 		return dto.Response{
 			Status: code,

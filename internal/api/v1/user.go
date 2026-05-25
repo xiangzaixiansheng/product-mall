@@ -3,25 +3,38 @@ package v1
 import (
 	"net/http"
 	"product-mall/internal/service"
-	util "product-mall/internal/tools"
 	"product-mall/pkg/pkg_logger"
 
 	"github.com/gin-gonic/gin"
 )
 
+// UserRegister 用户注册
+// @Summary 用户注册
+// @Tags 用户
+// @Accept json
+// @Produce json
+// @Param body body service.UserService true "注册信息"
+// @Success 200 {object} dto.Response
+// @Router /user/register [post]
 func UserRegister(c *gin.Context) {
-	//相当于创建了一个UserRegisterService对象，调用这个对象中的Register方法。
 	var userRegisterService service.UserService
 	if err := c.ShouldBind(&userRegisterService); err == nil {
 		res := userRegisterService.Register()
 		c.JSON(http.StatusOK, res)
 	} else {
 		c.JSON(http.StatusBadRequest, ErrorResponse(err))
-		pkg_logger.LogrusObj.Error("error", "error", err)
+		pkg_logger.Logger.Error("error", "error", err)
 	}
 }
 
-//UserLogin 用户登陆接口
+// UserLogin 用户登录
+// @Summary 用户登录
+// @Tags 用户
+// @Accept json
+// @Produce json
+// @Param body body service.UserService true "登录信息"
+// @Success 200 {object} dto.Response
+// @Router /user/login [post]
 func UserLogin(c *gin.Context) {
 	var userLoginService service.UserService
 	if err := c.ShouldBind(&userLoginService); err == nil {
@@ -29,33 +42,46 @@ func UserLogin(c *gin.Context) {
 		c.JSON(http.StatusOK, res)
 	} else {
 		c.JSON(http.StatusBadRequest, ErrorResponse(err))
-		pkg_logger.LogrusObj.Error("error", "error", err)
+		pkg_logger.Logger.Error("error", "error", err)
 	}
 }
 
-//更新用户信息
+// UserUpdate 更新用户信息
+// @Summary 更新用户信息
+// @Tags 用户
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body service.UserService true "用户信息"
+// @Success 200 {object} dto.Response
+// @Router /user [put]
 func UserUpdate(c *gin.Context) {
 	var userUpdateService service.UserService
-	claims, _ := util.ParseToken(c.GetHeader("Cookie"))
 	if err := c.ShouldBind(&userUpdateService); err == nil {
-		res := userUpdateService.Update(claims.ID)
+		res := userUpdateService.Update(getUserID(c))
 		c.JSON(http.StatusOK, res)
 	} else {
 		c.JSON(http.StatusBadRequest, ErrorResponse(err))
-		pkg_logger.LogrusObj.Error("error", "error", err)
+		pkg_logger.Logger.Error("error", "error", err)
 	}
 }
 
-//发送邮件
+// SendEmail 发送邮件
+// @Summary 发送验证邮件
+// @Tags 用户
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body service.SendEmailService true "邮件信息"
+// @Success 200 {object} dto.Response
+// @Router /user/sending-email [post]
 func SendEmail(c *gin.Context) {
 	var sendEmailService service.SendEmailService
-	//检查cookie里面的信息
-	claims, _ := util.ParseToken(c.GetHeader("Cookie"))
 	if err := c.ShouldBind(&sendEmailService); err == nil {
-		res := sendEmailService.SendEmail(claims.ID)
+		res := sendEmailService.SendEmail(getUserID(c))
 		c.JSON(http.StatusOK, res)
 	} else {
 		c.JSON(http.StatusBadRequest, ErrorResponse(err))
-		pkg_logger.LogrusObj.Error("error", "error", err)
+		pkg_logger.Logger.Error("error", "error", err)
 	}
 }

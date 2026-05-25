@@ -22,7 +22,7 @@ type ormLog struct{}
 //orm 日志记录
 func (l ormLog) Printf(format string, args ...any) {
 	if conf.ENV == "dev" {
-		pkg_logger.LogrusObj.Info(format, "args", args)
+		pkg_logger.Logger.Info(format, "args", args)
 	}
 }
 

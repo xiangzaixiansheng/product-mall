@@ -21,7 +21,7 @@ func WithRequsetId() gin.HandlerFunc {
 		c.Header(constants.HeaderXRequestID, uuID)
 
 		if c.Request.Method == "GET" {
-			pkg_logger.LogrusObj.Info("request param", "query", c.Request.URL.Query())
+			pkg_logger.Logger.Info("request param", "query", c.Request.URL.Query())
 		}
 
 		c.Next()

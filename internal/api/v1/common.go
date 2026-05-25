@@ -6,8 +6,15 @@ import (
 	"product-mall/conf"
 	"product-mall/internal/dto"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 )
+
+func getUserID(c *gin.Context) uint {
+	id, _ := c.Get("user_id")
+	uid, _ := id.(uint)
+	return uid
+}
 
 func ErrorResponse(err error) dto.Response {
 	if ve, ok := err.(validator.ValidationErrors); ok {

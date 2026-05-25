@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"net/http"
-	"product-mall/conf"
 	util "product-mall/internal/tools"
 	"product-mall/pkg/e"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -13,31 +13,27 @@ import (
 func JWT() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var code int
-		var data any
-		code = 200
-		token := c.GetHeader("Cookie")
+		code = e.SUCCESS
 
-		if conf.ENV == "dev" {
-			//测试环境走下去
-			c.Next()
-			return
-		}
-
+		token := extractToken(c)
 		if token == "" {
-			code = 404
+			code = e.ErrorAuthCheckTokenFail
 		} else {
 			claims, err := util.ParseToken(token)
 			if err != nil {
 				code = e.ErrorAuthCheckTokenFail
 			} else if claims.ExpiresAt.Before(time.Now()) {
 				code = e.ErrorAuthCheckTokenTimeout
+			} else {
+				c.Set("user_id", claims.ID)
+				c.Set("username", claims.Username)
 			}
 		}
+
 		if code != e.SUCCESS {
-			c.JSON(http.StatusOK, gin.H{
+			c.JSON(http.StatusUnauthorized, gin.H{
 				"status": code,
 				"msg":    e.GetMsg(code),
-				"data":   data,
 			})
 			c.Abort()
 			return
@@ -46,19 +42,14 @@ func JWT() gin.HandlerFunc {
 	}
 }
 
-//JWTAdmin token验证中间件
 func JWTAdmin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var code int
-		var data any
-		token := c.GetHeader("Cookie")
-		if conf.ENV == "dev" {
-			//测试环境走下去
-			c.Next()
-			return
-		}
+		code = e.SUCCESS
+
+		token := extractToken(c)
 		if token == "" {
-			code = e.InvalidParams
+			code = e.ErrorAuthCheckTokenFail
 		} else {
 			claims, err := util.ParseToken(token)
 			if err != nil {
@@ -67,18 +58,31 @@ func JWTAdmin() gin.HandlerFunc {
 				code = e.ErrorAuthCheckTokenTimeout
 			} else if claims.Authority == 0 {
 				code = e.ErrorAuthInsufficientAuthority
+			} else {
+				c.Set("user_id", claims.ID)
+				c.Set("username", claims.Username)
 			}
 		}
+
 		if code != e.SUCCESS {
-			c.JSON(http.StatusOK, gin.H{
+			c.JSON(http.StatusUnauthorized, gin.H{
 				"status": code,
 				"msg":    e.GetMsg(code),
-				"data":   data,
 			})
 			c.Abort()
 			return
 		}
-		//走下去
 		c.Next()
 	}
+}
+
+func extractToken(c *gin.Context) string {
+	auth := c.GetHeader("Authorization")
+	if strings.HasPrefix(auth, "Bearer ") {
+		return strings.TrimPrefix(auth, "Bearer ")
+	}
+	if token := c.GetHeader("Cookie"); token != "" {
+		return token
+	}
+	return ""
 }

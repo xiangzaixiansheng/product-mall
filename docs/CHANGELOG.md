@@ -1,5 +1,55 @@
 # 升级文档 (2026-05-25)
 
+## 2026-05-25 安全加固 & 工程基建完善
+
+### 安全修复
+
+| 项目 | 说明 |
+|------|------|
+| Dockerfile 版本同步 | `golang:1.22-alpine` → `golang:1.25-alpine`，与 go.mod 一致 |
+| Session 密钥 | 硬编码 → 读取 `SESSION_*` 环境变量 |
+| JWT 认证标准化 | 从 Cookie header 改为标准 `Authorization: Bearer <token>` |
+| Dev 环境认证 | 移除 dev 环境跳过认证的逻辑，统一走 token 校验 |
+| Handler 安全 | API handler 不再重复解析 token，从 gin.Context 中获取 user_id |
+
+### 工程基建
+
+| 文件 | 说明 |
+|------|------|
+| `Makefile` | 统一 build/run/test/lint/docker/swagger 命令 |
+| `.golangci.yml` | golangci-lint 配置，启用 gosec/errcheck/staticcheck 等 |
+| `.github/workflows/ci.yml` | GitHub Actions CI 流水线 (build + test + lint) |
+| `docker-compose.yml` | MySQL + Redis + App 一键编排启动 |
+
+### 代码质量
+
+| 改动 | 说明 |
+|------|------|
+| `LogrusObj` → `Logger` | 全局重命名，消除 logrus 历史遗留命名 |
+| `dto.Response` 增强 | 字段 `omitempty` 优化；新增 `BuildPagedResponse` 分页支持 |
+| 优雅关闭增强 | shutdown 时正确关闭 MySQL/Redis 连接 |
+| Server 超时 | 新增 ReadTimeout/WriteTimeout/IdleTimeout 配置 |
+
+### 功能增强
+
+| 功能 | 说明 |
+|------|------|
+| Swagger API 文档 | 集成 swaggo，访问 `/swagger/index.html` 查看文档 |
+| 分页响应 | `dto.BuildPagedResponse` 支持标准分页返回格式 |
+
+### 变更文件清单
+
+- `Dockerfile` / `Dockerfile.multistage` — Go 版本更新
+- `cmd/main.go` — 优雅关闭、Server 超时、Swagger 注解
+- `internal/routes/router.go` — Session 环境变量、Swagger 路由
+- `internal/middleware/jwt.go` — Authorization header 认证重构
+- `internal/api/v1/*.go` — 使用 context 获取用户ID、Swagger 注解
+- `internal/dto/common.go` — 分页响应结构
+- `pkg/pkg_logger/*.go` — Logger 重命名
+- `.env.example` — 新增 SESSION_* 配置项
+
+---
+
 ## 2026-05-25 企业级功能增强
 
 ### 新增中间件

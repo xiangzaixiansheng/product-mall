@@ -7,10 +7,10 @@ import (
 	"time"
 )
 
-var LogrusObj *slog.Logger
+var Logger *slog.Logger
 
 func init() {
-	if LogrusObj != nil {
+	if Logger != nil {
 		return
 	}
 	logFilePath := ""
@@ -33,5 +33,5 @@ func init() {
 	handler := slog.NewJSONHandler(file, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})
-	LogrusObj = slog.New(handler)
+	Logger = slog.New(handler)
 }

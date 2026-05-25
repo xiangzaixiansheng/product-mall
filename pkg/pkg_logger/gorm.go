@@ -70,5 +70,5 @@ func GetLoggerWithCtx(ctx context.Context) *slog.Logger {
 			requestId = id
 		}
 	}
-	return LogrusObj.With("X-Request-ID", requestId)
+	return Logger.With("X-Request-ID", requestId)
 }
