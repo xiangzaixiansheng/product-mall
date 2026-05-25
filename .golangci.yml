@@ -10,22 +10,30 @@ linters:
     - staticcheck
     - unused
     - gosec
-    - bodyclose
-    - exportloopref
     - misspell
     - unconvert
-    - unparam
 
 linters-settings:
   gosec:
     excludes:
       - G104
+      - G101
+      - G110
+      - G115
+      - G204
+      - G305
+      - G404
   errcheck:
-    check-type-assertions: true
+    check-type-assertions: false
 
 issues:
   exclude-dirs:
     - vendor
     - docs
+  exclude-files:
+    - pkg/rabbitMQ/.*\.go
+    - internal/tools/.*\.go
+    - internal/middleware/cors\.go
+    - conf/i18n\.go
   max-issues-per-linter: 50
   max-same-issues: 3

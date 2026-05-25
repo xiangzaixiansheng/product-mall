@@ -125,18 +125,16 @@ func (service *ProductService) Create(id uint, files []*multipart.FileHeader) dt
 func (service *ProductService) List() dto.Response {
 	var products []model.Product
 	var total int64
-	code := e.SUCCESS
 	if service.PageSize == 0 {
 		service.PageSize = 20
 	}
-	//如果传入的商品的CategoryID为0的话
+
 	if service.CategoryID == 0 {
 		if err := db.GetDB().Model(model.Product{}).Count(&total).Error; err != nil {
 			pkg_logger.Logger.Error("error", "error", err)
-			code = e.ErrorDatabase
 			return dto.Response{
-				Status: code,
-				Msg:    e.GetMsg(code),
+				Status: e.ErrorDatabase,
+				Msg:    e.GetMsg(e.ErrorDatabase),
 				Error:  err.Error(),
 			}
 		}
@@ -144,42 +142,36 @@ func (service *ProductService) List() dto.Response {
 			Limit(service.PageSize).Find(&products).
 			Error; err != nil {
 			pkg_logger.Logger.Error("error", "error", err)
-			code = e.ErrorDatabase
 			return dto.Response{
-				Status: code,
-				Msg:    e.GetMsg(code),
+				Status: e.ErrorDatabase,
+				Msg:    e.GetMsg(e.ErrorDatabase),
 				Error:  err.Error(),
 			}
 		}
-
 	} else {
-		//Preload 预处理用来处理一对多关系的
-		if err := db.GetDB().Model(model.Product{}).Preload("Category").
+		if err := db.GetDB().Model(model.Product{}).
 			Where("category_id = ?", service.CategoryID).
 			Count(&total).Error; err != nil {
 			pkg_logger.Logger.Error("error", "error", err)
-			code = e.ErrorDatabase
 			return dto.Response{
-				Status: code,
-				Msg:    e.GetMsg(code),
+				Status: e.ErrorDatabase,
+				Msg:    e.GetMsg(e.ErrorDatabase),
 				Error:  err.Error(),
 			}
 		}
 
-		if err := db.GetDB().Model(model.Product{}).Preload("Category").
+		if err := db.GetDB().Model(model.Product{}).
 			Where("category_id=?", service.CategoryID).
 			Offset((service.PageNum - 1) * service.PageSize).
 			Limit(service.PageSize).
 			Find(&products).Error; err != nil {
 			pkg_logger.Logger.Error("error", "error", err)
-			code = e.ErrorDatabase
 			return dto.Response{
-				Status: code,
-				Msg:    e.GetMsg(code),
+				Status: e.ErrorDatabase,
+				Msg:    e.GetMsg(e.ErrorDatabase),
 				Error:  err.Error(),
 			}
 		}
-
 	}
 
 	return dto.BuildListResponse(dto.BuildProducts(products), total)
@@ -250,7 +242,6 @@ func (service *ProductService) Update(id string) dto.Response {
 //搜索商品
 func (service *ProductService) Search() dto.Response {
 	var products []model.Product
-	code := e.SUCCESS
 	if service.PageSize == 0 {
 		service.PageSize = 15
 	}
@@ -259,10 +250,9 @@ func (service *ProductService) Search() dto.Response {
 		Limit(service.PageSize).Find(&products).Error
 	if err != nil {
 		pkg_logger.Logger.Error("error", "error", err)
-		code = e.ErrorDatabase
 		return dto.Response{
-			Status: code,
-			Msg:    e.GetMsg(code),
+			Status: e.ErrorDatabase,
+			Msg:    e.GetMsg(e.ErrorDatabase),
 			Error:  err.Error(),
 		}
 	}

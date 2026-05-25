@@ -84,7 +84,7 @@ func (service *CreateOrderService) Create(userID uint) dto.Response {
 				Msg:    fmt.Sprintf("商品 %s 正在被抢购，请稍后重试", item.Product.Name),
 			}
 		}
-		defer cache.GetInstance().Unlock(lockKey)
+		defer func() { _ = cache.GetInstance().Unlock(lockKey) }()
 
 		result := db.GetDB().Model(&model.Product{}).
 			Where("id = ? AND num >= ?", item.Product.ID, item.Cart.Num).
@@ -143,7 +143,6 @@ func (service *CreateOrderService) Create(userID uint) dto.Response {
 func (service *OrderListService) List(userID uint) dto.Response {
 	var orders []model.Order
 	var total int64
-	code := e.SUCCESS
 
 	if service.PageSize == 0 {
 		service.PageSize = 10
@@ -162,10 +161,9 @@ func (service *OrderListService) List(userID uint) dto.Response {
 	offset := (service.Page - 1) * service.PageSize
 	if err := query.Order("created_at DESC").Offset(offset).Limit(service.PageSize).Find(&orders).Error; err != nil {
 		pkg_logger.Logger.Error("list orders error", "error", err)
-		code = e.ErrorDatabase
 		return dto.Response{
-			Status: code,
-			Msg:    e.GetMsg(code),
+			Status: e.ErrorDatabase,
+			Msg:    e.GetMsg(e.ErrorDatabase),
 			Error:  err.Error(),
 		}
 	}

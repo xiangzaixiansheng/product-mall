@@ -43,8 +43,7 @@ func BuildCart(item1 model.Cart, item2 model.Product, ProductCreateUserID uint) 
 func BuildCarts(items []model.Cart) (carts []Cart) {
 	for _, cartInfo := range items {
 		productInfo := model.Product{}
-		var productCreateUserID uint
-		productCreateUserID = cartInfo.ProductCreateUserID
+		productCreateUserID := cartInfo.ProductCreateUserID
 		err := db.GetDB().First(&productInfo, cartInfo.ProductID, cartInfo.ProductCreateUserID).Error
 		if err != nil {
 			continue

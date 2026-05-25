@@ -117,7 +117,7 @@ func (service UserService) Login() dto.Response {
 		}
 	}
 
-	if user.CheckPassword(service.Password) == false {
+	if !user.CheckPassword(service.Password) {
 		code = e.ErrorNotCompare
 		return dto.Response{
 			Status: code,
